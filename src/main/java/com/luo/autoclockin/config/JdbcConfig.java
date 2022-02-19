@@ -25,7 +25,7 @@ public class JdbcConfig {
 
     @Bean
     public DataSource dataSource() {
-        var dataSource = new DruidDataSource();
+        DruidDataSource dataSource = new DruidDataSource();
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);

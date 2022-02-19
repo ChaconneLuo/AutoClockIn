@@ -25,4 +25,14 @@ public class InformationController {
         }
         return modelAndView;
     }
+
+    @RequestMapping(value = "/hand")
+    //@ResponseBody
+    public ModelAndView Hand(Student stu) throws InterruptedException {
+        ModelAndView modelAndView;
+        studentService.AllClockIn();
+        modelAndView = new ModelAndView("/success.html");
+
+        return modelAndView;
+    }
 }

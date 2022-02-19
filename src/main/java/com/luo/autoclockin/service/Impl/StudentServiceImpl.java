@@ -4,12 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.luo.autoclockin.Dao.StudentDao;
 import com.luo.autoclockin.entity.Student;
 import com.luo.autoclockin.service.StudentService;
+import com.zjiecode.wxpusher.client.WxPusher;
+import com.zjiecode.wxpusher.client.bean.Message;
+import com.zjiecode.wxpusher.client.bean.MessageResult;
+import com.zjiecode.wxpusher.client.bean.Result;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 
 import javax.net.ssl.*;
@@ -45,12 +52,21 @@ public class StudentServiceImpl implements StudentService {
     public void AllClockIn() throws InterruptedException {
         Queue<Student> queue = null;
         Queue<Student> errorStudent = new LinkedList<>();
-        var allStudent = studentDao.getAllStudent();
+        List<Student> allStudent = studentDao.getAllStudent();
         queue = new LinkedList<>(allStudent);
         while (!queue.isEmpty()) {
-            var poll = queue.poll();
+            Student poll = queue.poll();
             if (!SingleClockIn(poll)) {
                 errorStudent.add(poll);
+            } else {
+                if (poll.getPushUid() != null) {
+                    Message message = new Message();
+                    message.setAppToken("Test");//推送密钥，自行填写
+                    message.setContentType(Message.CONTENT_TYPE_TEXT);
+                    message.setContent(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(System.currentTimeMillis()) + " " + poll.getStu_id() + " " + "打卡成功");
+                    message.setUid(poll.getPushUid());
+                    Result<List<MessageResult>> result = WxPusher.send(message);
+                }
             }
         }
         if (!errorStudent.isEmpty()) {
@@ -82,9 +98,9 @@ public class StudentServiceImpl implements StudentService {
     }
 
     public boolean post(String stu_id, String url) throws JsonProcessingException {
-        var cookie = getCookie(url);
-        var message = getMessage(stu_id, cookie);
-        var changeMessage = changeMessage(message);
+        String cookie = getCookie(url);
+        String message = getMessage(stu_id, cookie);
+        String changeMessage = changeMessage(message);
 
         System.out.println(sendHttps(url, changeMessage, cookie));
         return true;
@@ -92,7 +108,7 @@ public class StudentServiceImpl implements StudentService {
 
     private String getCookie(String url) {
         try {
-            var map = Jsoup
+            Map<String, String> map = Jsoup
                     .connect(url)
                     .sslSocketFactory(socketFactory())
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
@@ -100,7 +116,7 @@ public class StudentServiceImpl implements StudentService {
                     .ignoreContentType(true)
                     .execute().cookies();
             String s = map.get("JSESSIONID");
-            var finalString = "JSESSIONID=" + s;
+            String finalString = "JSESSIONID=" + s;
             System.out.println(finalString);
             return finalString;
         } catch (UnsupportedEncodingException e) {
@@ -142,7 +158,7 @@ public class StudentServiceImpl implements StudentService {
     private String getMessage(String id, String cookie) {
         String url = "https://ehallplatform.xust.edu.cn/default/jkdk/mobile/com.primeton.eos.jkdk.xkdjkdkbiz.getJkdkRownum.biz.ext?gh=";
         try {
-            var document = Jsoup
+            Document document = Jsoup
                     .connect(url + id)
                     .sslSocketFactory(socketFactory())
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
@@ -150,7 +166,7 @@ public class StudentServiceImpl implements StudentService {
                     .ignoreContentType(true)
                     .post();
             String result = document.text();
-            var substring = result.substring(9, result.length() - 2);
+            String substring = result.substring(9, result.length() - 2);
             System.out.println(substring);
             return substring;
         } catch (IOException e) {
@@ -161,9 +177,9 @@ public class StudentServiceImpl implements StudentService {
 
     @SuppressWarnings(value = {"deprecation"})
     private static String changeMessage(String message) throws JsonProcessingException {
-        var jsonMapper = new JsonMapper();
-        var jo = jsonMapper.readTree(message);
-        var tmpNode = JsonNodeFactory.instance.objectNode();
+        JsonMapper jsonMapper = new JsonMapper();
+        JsonNode jo = jsonMapper.readTree(message);
+        final ObjectNode tmpNode = JsonNodeFactory.instance.objectNode();
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
@@ -222,7 +238,7 @@ public class StudentServiceImpl implements StudentService {
         tmpNode.put("ymtys", "");
         tmpNode.put("time", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));//new SimpleDateFormat("yyyy-MM-dd").format(new Date())
         System.out.println(tmpNode.toString());
-        var jb = JsonNodeFactory.instance.objectNode();
+        ObjectNode jb = JsonNodeFactory.instance.objectNode();
         jb.put("xkdjkdk", tmpNode);
         return jb.toString();
     }
@@ -232,7 +248,7 @@ public class StudentServiceImpl implements StudentService {
         System.out.println(a);
         String result = "";
         try {
-            var document = Jsoup.connect(url).sslSocketFactory(socketFactory())
+            Document document = Jsoup.connect(url).sslSocketFactory(socketFactory())
                     .method(Connection.Method.POST)
                     .requestBody(a)
                     .header("Accept", "*/*")
@@ -263,7 +279,16 @@ public class StudentServiceImpl implements StudentService {
     private void ErrorHandler(Queue<Student> queue) {
         System.out.println("CLOCK ERROR:\n");
         for (Student s : queue) {
-            System.out.println(s.getStu_id());
+            if (s.getPushUid() != null) {
+                Message message = new Message();
+                message.setAppToken("Test");
+                message.setContentType(Message.CONTENT_TYPE_TEXT);
+                message.setContent(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(System.currentTimeMillis()) + " " + s.getStu_id() + " " + "打卡失败");
+                message.setUid(s.getPushUid());
+                Result<List<MessageResult>> result = WxPusher.send(message);
+            } else {
+                System.out.println(s.getStu_id() + "Error");
+            }
         }
     }
 }
