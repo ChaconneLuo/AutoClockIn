@@ -5,8 +5,6 @@ import com.luo.autoclockin.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.View;
 
 @Controller
 @RequiredArgsConstructor
@@ -14,28 +12,22 @@ public class InformationController {
     private final StudentService studentService;
 
     @RequestMapping("/index")
-    public ModelAndView index(){
-        return new ModelAndView("/index.html");
+    public String index(){
+        return "index";
     }
 
     @RequestMapping(value = "/upload", params = {"stu_id", "url"})
-    public ModelAndView Upload(Student stu){
-        ModelAndView modelAndView;
+    public String Upload(Student stu){
         if (studentService.AddUser(stu)) {
-            modelAndView = new ModelAndView("/success.html");
+            return "success";
         }else{
-
-            modelAndView = new ModelAndView("/failure.html");
+            return "failure";
         }
-        return modelAndView;
     }
 
     @RequestMapping(value = "/hand")
-    public ModelAndView Hand(Student stu) throws InterruptedException {
-        ModelAndView modelAndView;
+    public String Hand() throws InterruptedException {
         studentService.AllClockIn();
-        modelAndView = new ModelAndView("/success.html");
-
-        return modelAndView;
+        return "success";
     }
 }

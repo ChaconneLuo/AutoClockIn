@@ -13,6 +13,7 @@ import com.zjiecode.wxpusher.client.bean.Message;
 import com.zjiecode.wxpusher.client.bean.MessageResult;
 import com.zjiecode.wxpusher.client.bean.Result;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,6 +29,7 @@ import java.security.cert.X509Certificate;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
 
@@ -36,6 +38,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public boolean AddUser(Student stu) {
         if (studentDao.select(stu.getStu_id()) != null) {
+            log.info("已存在" + stu.getStu_id());
             return false;
         } else {
             if (check(stu.getStu_id(), stu.getUrl())) {

@@ -4,7 +4,7 @@
     <insert id="insert" parameterType="com.luo.autoclockin.entity.Student">
         insert into data (stu_id,url) values (#{stu_id},#{url})
     </insert>
-    <select id="select">
+    <select id="select" resultType="com.luo.autoclockin.entity.Student">
         select * from data where stu_id = #{stu_id}
     </select>
     <select id="getAllStudent">
