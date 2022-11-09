@@ -5,14 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.luo.autoclockin.Dao.StudentDao;
+import com.luo.autoclockin.mapper.StudentMapper;
 import com.luo.autoclockin.entity.Student;
 import com.luo.autoclockin.service.StudentService;
 import com.zjiecode.wxpusher.client.WxPusher;
 import com.zjiecode.wxpusher.client.bean.Message;
 import com.zjiecode.wxpusher.client.bean.MessageResult;
 import com.zjiecode.wxpusher.client.bean.Result;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -32,11 +31,11 @@ import java.security.cert.X509Certificate;
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
 
-    private final StudentDao studentDao;
+    private final StudentMapper studentDao;
 
     @Override
     public boolean AddUser(Student stu) {
-        if (studentDao.search(stu.getStu_id()) != null) {
+        if (studentDao.select(stu.getStu_id()) != null) {
             return false;
         } else {
             if (check(stu.getStu_id(), stu.getUrl())) {
@@ -119,8 +118,6 @@ public class StudentServiceImpl implements StudentService {
             String finalString = "JSESSIONID=" + s;
             System.out.println(finalString);
             return finalString;
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

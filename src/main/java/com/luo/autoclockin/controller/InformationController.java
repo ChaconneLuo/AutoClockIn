@@ -6,15 +6,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.View;
 
 @Controller
 @RequiredArgsConstructor
 public class InformationController {
     private final StudentService studentService;
 
+    @RequestMapping("/index")
+    public ModelAndView index(){
+        return new ModelAndView("/index.html");
+    }
 
     @RequestMapping(value = "/upload", params = {"stu_id", "url"})
-    //@ResponseBody
     public ModelAndView Upload(Student stu){
         ModelAndView modelAndView;
         if (studentService.AddUser(stu)) {
@@ -27,7 +31,6 @@ public class InformationController {
     }
 
     @RequestMapping(value = "/hand")
-    //@ResponseBody
     public ModelAndView Hand(Student stu) throws InterruptedException {
         ModelAndView modelAndView;
         studentService.AllClockIn();
